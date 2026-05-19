@@ -201,59 +201,27 @@ function App() {
       </nav>
 
       <main>
-       {tab === "inicio" && (
-  <Home
-    menu={menu}
-    onGoShopping={() => setTab("sábado")}
-    onGoMenu={() => setTab("menú")}
-    onExportBackup={exportBackup}
-    onRestoreBackup={restoreBackup}
-    onResetDemo={resetDemo}
-  />
-)}
+        {tab === "inicio" && (
+          <Home
+            menu={menu}
+            onGoShopping={() => setTab("sábado")}
+            onGoMenu={() => setTab("menú")}
+            onExportBackup={exportBackup}
+            onRestoreBackup={restoreBackup}
+            onResetDemo={resetDemo}
+          />
+        )}
 
         {tab === "recetas" && (
-          <section>
-            <h2>Recetas</h2>
-
-            <div className="grid">
-              <button onClick={createSimpleRecipe}>Nueva</button>
-              <button onClick={importRecipe}>Importar JSON</button>
-            </div>
-
-            <textarea
-              placeholder="Pega aquí una receta JSON generada por ChatGPT"
-              value={recipeText}
-              onChange={(event) => setRecipeText(event.target.value)}
-            />
-
-            {recipes.map((recipe) => (
-              <div className="card" key={recipe.name}>
-                <h3>
-                  {recipe.emoji} {recipe.name}
-                </h3>
-                <p>
-                  {recipe.type} · {recipe.time} · {recipe.servings} raciones
-                </p>
-                <p>{recipe.tags?.join(", ")}</p>
-
-                <details>
-                  <summary>Ingredientes</summary>
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <p key={index}>
-                      {ingredient.category} {ingredient.name}: {ingredient.qty}{" "}
-                      {ingredient.unit}
-                    </p>
-                  ))}
-                </details>
-
-                <div className="grid">
-                  <button onClick={() => setTab("menú")}>Añadir al menú</button>
-                  <button onClick={() => deleteRecipe(recipe.name)}>Borrar</button>
-                </div>
-              </div>
-            ))}
-          </section>
+          <Recipes
+            recipes={recipes}
+            recipeText={recipeText}
+            onRecipeTextChange={setRecipeText}
+            onCreateRecipe={createSimpleRecipe}
+            onImportRecipe={importRecipe}
+            onDeleteRecipe={deleteRecipe}
+            onGoMenu={() => setTab("menú")}
+          />
         )}
 
         {tab === "menú" && (
@@ -357,7 +325,9 @@ function App() {
                     className="small"
                     onClick={() =>
                       updateManualItems(
-                        manualItems.filter((manualItem) => manualItem !== item.name)
+                        manualItems.filter(
+                          (manualItem) => manualItem !== item.name
+                        )
                       )
                     }
                   >
