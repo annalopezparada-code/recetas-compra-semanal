@@ -13,21 +13,11 @@ import {
 
 function App() {
   const [tab, setTab] = useState("inicio");
-  const [recipes, setRecipes] = useState(() =>
-    loadFromStorage("recipes", defaultRecipes)
-  );
-  const [menu, setMenu] = useState(() =>
-    loadFromStorage("menu", createEmptyMenu())
-  );
-  const [pantryMissing, setPantryMissing] = useState(() =>
-    loadFromStorage("pantryMissing", [])
-  );
-  const [manualItems, setManualItems] = useState(() =>
-    loadFromStorage("manualItems", [])
-  );
-  const [bought, setBought] = useState(() =>
-    loadFromStorage("bought", [])
-  );
+  const [recipes, setRecipes] = useState(() => loadFromStorage("recipes", defaultRecipes));
+  const [menu, setMenu] = useState(() => loadFromStorage("menu", createEmptyMenu()));
+  const [pantryMissing, setPantryMissing] = useState(() => loadFromStorage("pantryMissing", []));
+  const [manualItems, setManualItems] = useState(() => loadFromStorage("manualItems", []));
+  const [bought, setBought] = useState(() => loadFromStorage("bought", []));
   const [recipeText, setRecipeText] = useState("");
   const [newItem, setNewItem] = useState("");
 
@@ -41,27 +31,27 @@ function App() {
     });
   }, [recipes, menu, pantryMissing, manualItems]);
 
-  function updateRecipes(next) {
+  function saveRecipes(next) {
     setRecipes(next);
     saveToStorage("recipes", next);
   }
 
-  function updateMenu(next) {
+  function saveMenu(next) {
     setMenu(next);
     saveToStorage("menu", next);
   }
 
-  function updatePantryMissing(next) {
+  function savePantryMissing(next) {
     setPantryMissing(next);
     saveToStorage("pantryMissing", next);
   }
 
-  function updateManualItems(next) {
+  function saveManualItems(next) {
     setManualItems(next);
     saveToStorage("manualItems", next);
   }
 
-  function updateBought(next) {
+  function saveBought(next) {
     setBought(next);
     saveToStorage("bought", next);
   }
@@ -75,7 +65,7 @@ function App() {
         return;
       }
 
-      updateRecipes([...recipes, recipe]);
+      saveRecipes([...recipes, recipe]);
       setRecipeText("");
       alert("Receta importada.");
     } catch {
@@ -87,26 +77,6 @@ function App() {
     const name = prompt("Nombre de la receta:");
     if (!name) return;
 
-    const ingredientsRaw = prompt(
-      "Ingredientes, uno por línea:\nHuevos; 4; unidades; 🥚 Nevera"
-    );
-
-    const ingredients = (ingredientsRaw || "")
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => {
-        const [ingredientName, qty, unit, category] = line
-          .split(";")
-          .map((item) => item.trim());
-
-        return {
-          name: ingredientName,
-          qty: Number(qty) || 1,
-          unit: unit || "unidad",
-          category: category || "🛒 Otros"
-        };
-      });
-
     const recipe = {
       name,
       emoji: "🍽️",
@@ -114,15 +84,47 @@ function App() {
       type: "Principal",
       time: "30 min",
       tags: ["manual"],
-      ingredients
+      ingredients: []
     };
 
-    updateRecipes([...recipes, recipe]);
+    saveRecipes([...recipes, recipe]);
   }
 
   function deleteRecipe(name) {
     if (!confirm(`¿Borrar ${name}?`)) return;
-    updateRecipes(recipes.filter((recipe) => recipe.name !== name));
+    saveRecipes(recipes.filter((recipe) => recipe.name !== name));
+  }
+
+  function exportBackup() {
+    const data = { recipes, menu, pantryMissing, manualItems, bought };
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    alert("Copia de seguridad copiada.");
+  }
+
+  function restoreBackup() {
+    const raw = prompt("Pega aquí la copia de seguridad:");
+    if (!raw) return;
+
+    try {
+      const data = JSON.parse(raw);
+      saveRecipes(data.recipes || defaultRecipes);
+      saveMenu(data.menu || createEmptyMenu());
+      savePantryMissing(data.pantryMissing || []);
+      saveManualItems(data.manualItems || []);
+      saveBought(data.bought || []);
+      alert("Copia restaurada.");
+    } catch {
+      alert("La copia no es válida.");
+    }
+  }
+
+  function resetDemo() {
+    if (!confirm("¿Reiniciar datos de prueba?")) return;
+    saveRecipes(defaultRecipes);
+    saveMenu(createEmptyMenu());
+    savePantryMissing([]);
+    saveManualItems([]);
+    saveBought([]);
   }
 
   function copyShoppingList() {
@@ -135,48 +137,6 @@ function App() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }
 
-  function exportBackup() {
-    const data = {
-      recipes,
-      menu,
-      pantryMissing,
-      manualItems,
-      bought
-    };
-
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    alert("Copia de seguridad copiada.");
-  }
-
-  function restoreBackup() {
-    const raw = prompt("Pega aquí la copia de seguridad:");
-    if (!raw) return;
-
-    try {
-      const data = JSON.parse(raw);
-
-      updateRecipes(data.recipes || defaultRecipes);
-      updateMenu(data.menu || createEmptyMenu());
-      updatePantryMissing(data.pantryMissing || []);
-      updateManualItems(data.manualItems || []);
-      updateBought(data.bought || []);
-
-      alert("Copia restaurada.");
-    } catch {
-      alert("La copia no es válida.");
-    }
-  }
-
-  function resetDemo() {
-    if (!confirm("¿Reiniciar datos de prueba?")) return;
-
-    updateRecipes(defaultRecipes);
-    updateMenu(createEmptyMenu());
-    updatePantryMissing([]);
-    updateManualItems([]);
-    updateBought([]);
-  }
-
   return (
     <div className="app">
       <style>{styles}</style>
@@ -187,17 +147,15 @@ function App() {
       </header>
 
       <nav>
-        {["inicio", "recetas", "menú", "despensa", "sábado", "fanzines"].map(
-          (item) => (
-            <button
-              key={item}
-              className={tab === item ? "active" : ""}
-              onClick={() => setTab(item)}
-            >
-              {item}
-            </button>
-          )
-        )}
+        {["inicio", "recetas", "menú", "despensa", "sábado", "fanzines"].map((item) => (
+          <button
+            key={item}
+            className={tab === item ? "active" : ""}
+            onClick={() => setTab(item)}
+          >
+            {item}
+          </button>
+        ))}
       </nav>
 
       <main>
@@ -227,28 +185,22 @@ function App() {
         {tab === "menú" && (
           <section>
             <h2>Menú semanal</h2>
-
             {weekDays.map((day) => (
               <div className="card" key={day}>
-                <label>
-                  <strong>{day}</strong>
-                  <select
-                    value={menu[day]}
-                    onChange={(event) =>
-                      updateMenu({
-                        ...menu,
-                        [day]: event.target.value
-                      })
-                    }
-                  >
-                    <option value="">Sin receta / sobras</option>
-                    {recipes.map((recipe) => (
-                      <option key={recipe.name} value={recipe.name}>
-                        {recipe.emoji} {recipe.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <strong>{day}</strong>
+                <select
+                  value={menu[day]}
+                  onChange={(event) =>
+                    saveMenu({ ...menu, [day]: event.target.value })
+                  }
+                >
+                  <option value="">Sin receta / sobras</option>
+                  {recipes.map((recipe) => (
+                    <option key={recipe.name} value={recipe.name}>
+                      {recipe.emoji} {recipe.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             ))}
           </section>
@@ -258,7 +210,6 @@ function App() {
           <section>
             <h2>Despensa</h2>
             <p>Marca lo que falta. Pasará a la lista del sábado.</p>
-
             {defaultPantry.map((item) => (
               <label className="row" key={item.name}>
                 <input
@@ -266,17 +217,13 @@ function App() {
                   checked={pantryMissing.includes(item.name)}
                   onChange={(event) => {
                     if (event.target.checked) {
-                      updatePantryMissing([...pantryMissing, item.name]);
+                      savePantryMissing([...pantryMissing, item.name]);
                     } else {
-                      updatePantryMissing(
-                        pantryMissing.filter((name) => name !== item.name)
-                      );
+                      savePantryMissing(pantryMissing.filter((name) => name !== item.name));
                     }
                   }}
                 />
-                <span>
-                  {item.category} {item.name}
-                </span>
+                <span>{item.category} {item.name}</span>
               </label>
             ))}
           </section>
@@ -295,7 +242,7 @@ function App() {
               <button
                 onClick={() => {
                   if (!newItem.trim()) return;
-                  updateManualItems([...manualItems, newItem.trim()]);
+                  saveManualItems([...manualItems, newItem.trim()]);
                   setNewItem("");
                 }}
               >
@@ -309,31 +256,13 @@ function App() {
                   type="checkbox"
                   checked={bought.includes(item.id)}
                   onChange={(event) => {
-                    if (event.target.checked) {
-                      updateBought([...bought, item.id]);
-                    } else {
-                      updateBought(bought.filter((id) => id !== item.id));
-                    }
+                    if (event.target.checked) saveBought([...bought, item.id]);
+                    else saveBought(bought.filter((id) => id !== item.id));
                   }}
                 />
                 <span className={bought.includes(item.id) ? "done" : ""}>
                   {item.category} {item.name}: {item.qty} {item.unit}
                 </span>
-
-                {item.manual && (
-                  <button
-                    className="small"
-                    onClick={() =>
-                      updateManualItems(
-                        manualItems.filter(
-                          (manualItem) => manualItem !== item.name
-                        )
-                      )
-                    }
-                  >
-                    borrar
-                  </button>
-                )}
               </div>
             ))}
 
@@ -347,16 +276,11 @@ function App() {
         {tab === "fanzines" && (
           <section>
             <h2>Fanzines</h2>
-            <p>Galería demo visual de recetas.</p>
-
             {recipes.map((recipe) => (
-              <div className="fanzine" key={recipe.name}>
-                <div className="cover">
-                  <span>{recipe.emoji}</span>
-                  <h3>{recipe.name}</h3>
-                  <p>{recipe.type}</p>
-                  <p>{recipe.time}</p>
-                </div>
+              <div className="cover" key={recipe.name}>
+                <span>{recipe.emoji}</span>
+                <h3>{recipe.name}</h3>
+                <p>{recipe.type} · {recipe.time}</p>
               </div>
             ))}
           </section>
@@ -369,7 +293,7 @@ function App() {
 const styles = `
   body {
     margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: system-ui, sans-serif;
     background: #fff7ed;
     color: #1f2937;
   }
@@ -389,16 +313,6 @@ const styles = `
     border-bottom-right-radius: 24px;
   }
 
-  header h1 {
-    margin: 0;
-    font-size: 24px;
-  }
-
-  header p {
-    margin-bottom: 0;
-    opacity: 0.95;
-  }
-
   nav {
     display: flex;
     gap: 8px;
@@ -407,7 +321,6 @@ const styles = `
     position: sticky;
     top: 0;
     background: #fffaf3;
-    z-index: 5;
   }
 
   button {
@@ -424,17 +337,8 @@ const styles = `
     color: white;
   }
 
-  button.small {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-
   main {
     padding: 16px;
-  }
-
-  h2 {
-    margin-top: 0;
   }
 
   .card {
@@ -452,23 +356,17 @@ const styles = `
     margin: 12px 0;
   }
 
-  textarea {
-    width: 100%;
-    min-height: 120px;
-    box-sizing: border-box;
-    border-radius: 14px;
-    border: 1px solid #fdba74;
-    padding: 10px;
-    margin-bottom: 12px;
-  }
-
-  input, select {
+  textarea, input, select {
     width: 100%;
     box-sizing: border-box;
     padding: 10px;
     border-radius: 12px;
     border: 1px solid #fdba74;
     margin-top: 8px;
+  }
+
+  textarea {
+    min-height: 120px;
   }
 
   .row {
@@ -491,29 +389,16 @@ const styles = `
     opacity: 0.5;
   }
 
-  .fanzine {
-    margin-bottom: 14px;
-  }
-
   .cover {
     background: linear-gradient(135deg, #fb923c, #facc15);
     color: white;
     padding: 24px;
     border-radius: 24px;
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+    margin-bottom: 14px;
   }
 
   .cover span {
     font-size: 56px;
-  }
-
-  .cover h3 {
-    font-size: 28px;
-    margin: 8px 0;
   }
 `;
 
