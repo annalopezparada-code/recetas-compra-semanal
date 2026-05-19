@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import Home from "./components/Home";
 import { defaultRecipes } from "./data/defaultRecipes";
 import { defaultPantry } from "./data/pantry";
 import { loadFromStorage, saveToStorage } from "./utils/storage";
@@ -199,28 +200,16 @@ function App() {
       </nav>
 
       <main>
-        {tab === "inicio" && (
-          <section>
-            <h2>Inicio</h2>
-
-            <div className="card">
-              <h3>Resumen de semana</h3>
-              {weekDays.map((day) => (
-                <p key={day}>
-                  <strong>{day}:</strong> {menu[day] || "Sin receta / sobras"}
-                </p>
-              ))}
-            </div>
-
-            <div className="grid">
-              <button onClick={() => setTab("sábado")}>Ver compra</button>
-              <button onClick={() => setTab("menú")}>Organizar menú</button>
-              <button onClick={exportBackup}>Copia de seguridad</button>
-              <button onClick={restoreBackup}>Restaurar copia</button>
-              <button onClick={resetDemo}>Reiniciar demo</button>
-            </div>
-          </section>
-        )}
+       {tab === "inicio" && (
+  <Home
+    menu={menu}
+    onGoShopping={() => setTab("sábado")}
+    onGoMenu={() => setTab("menú")}
+    onExportBackup={exportBackup}
+    onRestoreBackup={restoreBackup}
+    onResetDemo={resetDemo}
+  />
+)}
 
         {tab === "recetas" && (
           <section>
