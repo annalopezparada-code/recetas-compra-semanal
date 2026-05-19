@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Home from "./components/Home";
+import Recipes from "./components/Recipes";
 import { defaultRecipes } from "./data/defaultRecipes";
 import { defaultPantry } from "./data/pantry";
 import { loadFromStorage, saveToStorage } from "./utils/storage";
